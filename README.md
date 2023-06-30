@@ -1,6 +1,11 @@
 # FaaS-Platform
 This is a project by Praneeth Chandu and Natcha Chotnoparatpat
 
+Function-as-a-Service (FaaS) platform is implemented using Python. The FastAPI framework is used for the REST API and ZMQ for communication with a pool of worker processes.
+
+![image](https://github.com/FahChotnoparatpat/FaaS-Platform/assets/107445187/ad9a2c1b-f342-473b-84ae-88124999b5a7)
+
+
 **Redis Client:**
 Our Redis Client contains functions to serve the FastAPI. In our Redis client, we implemented the following methods:
 * `register_function(function_name, function_body):`
