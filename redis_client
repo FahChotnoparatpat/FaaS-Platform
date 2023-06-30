@@ -1,0 +1,96 @@
+import redis
+import json
+import uuid
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0)
+
+def register_function(function_name, function_body):
+    """
+    Registers a function in Redis with a unique UUID.
+    Returns the UUID for the function.
+    """
+    function_id = str(uuid.uuid4())
+    redis_client.set(function_id, json.dumps({
+        'function_name': function_name,
+        'function_body': function_body
+    }))
+
+    return str(function_id)
+
+
+def get_function(function_id):
+    """
+    Retrieves a function from Redis by UUID.
+    Returns a dictionary object containing the function name and body.
+    """
+    function_data = redis_client.get(function_id)
+    if function_data:
+        function_data = json.loads(function_data)
+        function_name = function_data['function_name']
+        function_body = function_data['function_body']
+        return {'function_name': function_name, 'function_body': function_body}
+    else:
+        raise Exception('Function not found in Redis')
+
+
+def create_task(function_id, input_arguments):
+    """
+    Creates a new task in Redis for the specified function and payload.
+    Returns a unique task ID.
+    """
+    task_id = str(uuid.uuid4())
+    function_data = get_function(function_id)
+    redis_client.set(task_id, json.dumps({
+        'function_data': function_data,
+        'args': input_arguments,
+        'status': 'QUEUED',
+        'result': None
+    }))
+
+    redis_client.publish('tasks', task_id)
+    return str(task_id)
+
+
+def get_task(task_id):
+    """
+    Retrieves a task from Redis by ID.
+    Returns a dictionary object containing the function ID, payload, status, and result.
+    """
+    task_data = redis_client.get(task_id)
+    print(task_data)
+    if task_data:
+        task_data = json.loads(task_data)
+        function_data = task_data['function_data'] #json of name and function_body
+        args = task_data['args']
+        status = task_data['status']
+        result = task_data['result']
+
+        return {'function_data': function_data, 'args': args, 'status': status, 'result': result}
+    else:
+        raise Exception('No task with this ID was found in Redis')
+
+
+def update_task_status(task_id, status):
+    """
+    Updates the status of a task in Redis by ID.
+    """
+    task_data = redis_client.get(task_id)
+    if task_data:
+        task_data = json.loads(task_data)
+        task_data['status'] = status  # updating task status to new status (arg)
+        redis_client.set(task_id, json.dumps(task_data))
+    else:
+        raise Exception('Task not found in Redis')
+
+
+def update_task_result(task_id, result):
+    """
+    Updates the result of a task in Redis by ID.
+    """
+    task_data = redis_client.get(task_id)
+    if task_data:
+        task_data = json.loads(task_data)
+        task_data['result'] = result
+        redis_client.set(task_id, json.dumps(task_data))
+    else:
+        raise Exception('Task not found in Redis')
