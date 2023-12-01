@@ -58,11 +58,6 @@ The validations for responses from each API call were imported from project spec
 * If a message is received, it is assumed that the message is a task_id as those are the only messages that get pushed from the publisher
 * Once a message is received, the dispatcher retrieves the task's payload from the redis client and executes using `execute_function` described above async through the worker pool 
 
-*Limitations of Local Dispatcher*
-
-* Limited Scalability: The local dispatcher creates a fixed pool of workers based on command line arguments. This means that the number of workers is predetermined and cannot easily scale up or down based on the workload or system resources. 
-* Single Point of Failure: The local dispatcher operates as a single instance, listening for messages and dispatching tasks. If the local dispatcher encounters an error or crashes, the entire task dispatching system may be affected, leading to service interruptions or loss of tasks.
-
 *Push Dispatcher*
 
 * Creates a socket with ROUTER protocol and starts listening to messages from publisher as mentioned in local_dispatcher
@@ -79,11 +74,6 @@ The validations for responses from each API call were imported from project spec
 * Upon initialization, the dealer sends a message to the router it's connected with stating it is available
 * Upon receiving a message, the worker node will run `execute_function` async via the multiproc pool with the message as the argument (the message is the task_id, function_payload, and corresponding args)
 
-*Limitations of Push Dispatcher/Worker*
-
-* Limited Error Handling: The current implementation does not explicitly handle potential errors or exceptions that may occur during task execution.
-* Fault Tolerance: With this currently implementation, the dispatcher does not have a mechanism to detect and reassign the task to another worker if a worker fails.
-
 *Pull Dispatcher*
 
 * Creates a socket with REQ protocol and starts listening to messages from publisher via `listen_to_pub`
@@ -96,11 +86,3 @@ The validations for responses from each API call were imported from project spec
 * Connects to the REP
 * Receives messages and executes if there is a task in the message. 
 * Execution is the same as the other dispatchers except the message back to REP is in a dict format instead of a list or tuple because of the distinct pull dispatcher logic
-
-*Limitations of Pull Dispatcher/Worker*
-
-**Communication Overhead**: In the pull implementation, workers frequently query the dispatcher for available tasks. This frequent communication between workers and the dispatcher can introduce additional network overhead and latency. The overhead increases as the number of workers and task requests grows, potentially impacting the overall system performance.
-
-**Fault Tolerance**: With this currently implementation, the dispatcher does not have a mechanism to detect and reassign the task to another worker if a worker fails.
-
-**Single Point of Failure**: The pull dispatcher acts as a single point of failure in this implementation. If the dispatcher fails or becomes unavailable, the entire task distribution process is disrupted, and no new tasks can be assigned to workers until the dispatcher is restored.
